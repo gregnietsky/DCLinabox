@@ -1,0 +1,852 @@
+<HTML>
+<HEAD>
+<TITLE>DCL in a box</TITLE>
+
+<STYLE TYPE="text/css">
+body { font-family:arial,helvetica,sans-serif; }
+
+h1 {
+  font-size:150%; font-weight:bold; text-decoration:underline;
+}
+
+h2 {
+  font-size:130%; font-weight:bold; text-decoration:underline;
+  letter-spacing:1px;
+  padding-top:1.2em;
+}
+
+h3 {
+  font-size:120%; font-weight:bold;
+  padding-top:0.8em;
+}
+
+tt { font-family:courier,monospace; padding:0 4px 0 4px; }
+
+hr { color:#888888; background-color:#888888; height:1px; border:0; }
+
+.code {
+  font-family:courier,monospace;
+  border-style:solid; border-color:#888888; border-left-width:1;
+  border-top-width:0; border-right-width:0; border-bottom-width:0;
+  background-color:#eeeeee;
+  margin-left:2em;
+  margin-right:5em;
+  padding:0.3em;
+  padding-left:1em;
+}
+
+.quote {
+  border-style:dotted; border-color:#888888; border-width:1;
+  font-size:90%;
+  background-color:#eeeeee;
+  margin-left:2em;
+  margin-right:5em;
+  padding:0.3em;
+  padding-left:1em;
+}
+
+.refer {
+  font-size:90%; width:90%; text-align:right;
+}
+
+.variable table, .variable th, .variable td {
+  border-style:none;
+  border-width:0;
+  vertical-align:top;
+  text-align:left;
+  background-color:#eeeeee;
+}
+
+.variable th { text-decoration:underline; margin:0; padding:5px; }
+.variable td { margin:0; padding:1px 5px 1px 5px; }
+
+.dclinabox {
+  font-size:110%; font-family:"lucinda console",monospace;
+  letter-spacing:1px; margin:0 2px 0 2px;
+}
+
+.button { border:1px solid slategray; padding:0 4px 0 4px; }
+
+</STYLE>
+
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000" LINK="#0000cc" VLINK="#0000cc">
+
+<CENTER>
+
+<H1 STYLE="font-size:200%; font-family:monospace; font-weight:bold;
+word-spacing:-11px; margin-bottom:-9px;">DCL in a box</H1>
+<H3>Version 1.1.1, 8th December 2012</H3>
+<!-- Version 1.0.0, 22nd January 2012 (happy birthday Emily :-) -->
+
+<P><B>Copyright &copy; 2011,2012 Mark G. Daniel</B>
+<BR>This program, comes with ABSOLUTELY NO WARRANTY.
+<BR>This is free software, and you are welcome to redistribute it under the
+<BR>conditions of the GNU GENERAL PUBLIC LICENSE, version 3, or any later version.
+<BR><A HREF="http://www.gnu.org/licenses/gpl.txt">http://www.gnu.org/licenses/gpl.txt</A>
+
+</CENTER>
+
+<H2 STYLE="margin-left:1.5em;">Contents</H2>
+
+<UL>
+<LI><A HREF="#shellinabox">ShellInABox</A>
+<LI><A HREF="#install">Installation</A>
+<LI><A HREF="#config">Configuration</A>
+<LI><A HREF="#sso">Single Sign-On</A>
+<LI><A HREF="#custom">Customising</A>
+<LI><A HREF="#bookmarklet">Bookmarklet</A>
+<LI><A HREF="#obfuscation">Obfuscation</A>
+<LI><A HREF="#problems">Problems</A>
+<LI><A HREF="#release">Releases</A>
+<LI><A HREF="#ackn">Acknowlegements</A>
+</UL>
+
+<BR><HR ALIGN=left SIZE=1 NOSHADE><BR>
+
+<noscript>
+<span style="background-color:#ffff00;font-style:bold;font-size:120%;">
+&nbsp;JavaScript required (unsurprisingly)!&nbsp;
+</span>
+</noscript>
+
+<P><SPAN STYLE="font-size:150%; font-family:monospace; font-weight:bold;
+word-spacing:-9px;">DCL in a box</SPAN>&nbsp;
+provides an <B>in-browser VT102 terminal emulation</B> via a WASD
+<A TARGET="_blank" HREF="http://en.wikipedia.org/wiki/Websocket">WebSocket</A>
+scripting application using the pseudo-terminal API.  WebSocket makes the
+terminal input/output stream interface particularly straight-forward and allows
+a session logged-in via the Web to be maintained fairly simply.
+
+<P> Although at the time of first <SPAN CLASS="dclinabox">DCLinabox</SPAN>
+release (January 2012) the WebSocket Protocol had just been published
+(<a target="_blank" href="http://www.rfc-editor.org/rfc/rfc6455.txt">http://www.rfc-editor.org/rfc/rfc6455.txt</a>)
+and mainstream browser support was fairly limited, the asynchronous,
+bidirectional data stream available using WebSocket will quickly make it an
+invaluable Web service building block with broad mainstream support.
+
+<P> This version of <SPAN CLASS="dclinabox">DCLinabox</SPAN> has been developed
+using <b>mainstream releases; Chrome 23.0, Firefox 17.0, MSIE 10.0, Opera 12.10
+and Safari 6.0</b>.
+
+<BLOCKQUOTE><I>
+Currently not all browsers fully support all HTTP semantics prior to WebSocket
+protocol upgrade.  For example, of the above, only Firefox supports the
+standard HTTP request and proxy authentication mechanisms, which can be an
+issue if negotiating WebSockets through a proxy server requiring credentials.
+</I></BLOCKQUOTE> 
+
+<p><b>Does this browser support WebSocket?&nbsp;
+<span id="websocket_yes"
+style="background-color:#00ff00;font-size:120%;display:none;">
+&nbsp;YES&nbsp;
+</span>
+<span id="websocket_yes_but"
+style="background-color:#ffff00;font-size:120%;display:none;">
+&nbsp;YES ... but not a recent enough version&nbsp;
+</span>
+<span id="websocket_no"
+style="background-color:#ff0000;font-size:120%;display:inline;">
+&nbsp;NO!&nbsp;
+</span>
+</b>
+<script language="JavaScript">
+document.write('<br /><i>' + navigator.userAgent + '</i>');
+function testWebSocketSupport()
+{
+   try {
+      var ws = new WebSocket("wss://localhost/");
+      if (typeof ws.protocol == "undefined")
+         return -1;
+      else
+         return +1;
+   }
+   catch (err) {
+      return 0;
+   }
+}
+function reportWebSocketSupport()
+{
+   var level = testWebSocketSupport();
+   if (level != 0)
+      document.getElementById("websocket_no").style.display = "none";
+   if (level == +1)
+      document.getElementById("websocket_yes").style.display = "inline";
+   else
+   if (level == -1)
+      document.getElementById("websocket_yes_but").style.display = "inline";
+}
+if (window.addEventListener)
+   window.addEventListener("load", reportWebSocketSupport, false);
+else
+if (window.attachEvent)
+   window.attachEvent("onload", reportWebSocketSupport);
+</script>
+</p>
+
+<P> <SPAN CLASS="dclinabox">DCLinabox</SPAN> is based on a JavaScript VT102
+emulator from the <B>ShellInABox</B> project. 
+
+<P> For all things <TT STYLE="font-size:120%">VT</TT> ...
+<A TARGET="_blank" HREF="http://vt100.net">vt100.net</A>
+
+<P> 
+<A NAME="shellinabox">
+<H2 STYLE="letter-spacing:-1px;">Shell In A Box</H2>
+</A>
+
+<P> Is a Free and Open Source project by Markus Gutschke
+&lt;markus@shellinabox.com&gt;.
+
+<BLOCKQUOTE>
+<A TARGET="_blank" HREF="http://code.google.com/p/shellinabox/">http://code.google.com/p/shellinabox/</A>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+&quot;Shell In A Box implements a web server that can export arbitrary command
+line tools to a web based terminal emulator. This emulator is accessible to any
+JavaScript and CSS enabled web browser and does not require any additional
+browser plugins. Most typically, login shells would be exported this way.&quot;
+</BLOCKQUOTE>
+   
+<P> <SPAN CLASS="dclinabox">DCLinabox</SPAN> exports the DCL command-line in a similar way.
+
+<A NAME="install">
+<H2>Installation</H2>
+</A>
+
+<UL>
+
+<LI> Obtain the <SPAN CLASS="dclinabox">DCLinabox</SPAN> kit from
+
+<BLOCKQUOTE>
+<A HREF="http://wasd.vsm.com.au/wasd/">http://wasd.vsm.com.au/wasd/</A>
+</BLOCKQUOTE>
+
+<LI> UNZIP the kit
+
+<PRE CLASS="code">
+$ SET DEFAULT WASD_ROOT:[000000]
+$ UNZIP "-V" location:DCLINABOXnnn.ZIP
+</PRE>
+
+<LI> Note that this performs a link-only build against the supplied object
+modules.  Compilation is also available (just remove the LINK parameter).
+
+<PRE CLASS="code">
+$ SET DEFAULT WASD_ROOT:[SRC.DCLINABOX]
+$ @BUILD_DCLINABOX LINK
+</PRE>
+
+<LI> Copy the <SPAN CLASS="dclinabox">DCLinabox</SPAN> application to the
+script executable location.
+
+<PRE CLASS="code">
+$ COPY WASD_EXE:DCLINABOX.EXE CGI_EXE:
+</PRE>
+
+<P><LI> <A HREF="#config">Configure</A> the application.
+
+<P><LI> Open the
+<A TARGET="_blank" HREF="example.html"><TT>EXAMPLE.HTML</TT></A>
+page and log in!
+
+<P><LI> Edit the system startup to make required logical names, and if required
+installed image, persistent.
+<BR> The example
+<A TARGET="_blank" HREF="dclinabox_startup.com"><TT>DCLINABOX_STARTUP.COM</TT></A>
+can assist with this.
+
+<P><LI> When updating, remember that the more recent JavaScript will need to be
+(re)loaded into browsers, the executable image possibly reINSTALLed, and that
+as a CGIplus application will require any currently instantiated processes
+flushed with <TT>$ HTTPD/DO=DCL=DELETE</TT> (caution! - peremptorily removes
+<U>all</U> script processes)
+
+</UL>
+
+<P> By default all the required JavaScript, CSS and graphics are located in the
+WASD runtime directory
+<A TARGET="_blank" HREF="/wasd_root/runtime/dclinabox/"><TT>WASD_ROOT:[RUNTIME.DCLINABOX]</TT></A>&nbsp;
+
+<A NAME="config">
+<H2>Configuration</H2>
+</A>
+
+<P> <SPAN CLASS="dclinabox">DCLinabox</SPAN> allows remote login from a Web
+browser to the server  system.  This could be a security issue and so the
+script disables itself by default.  Logical name value DCLINABOX_ENABLE
+controls whether the application can be used.  Define this system-wide using a
+value of "*" to simply allow experimentation.  Alternatively provide one or
+more comma-separated, dotted-decimal IP address to specify one or more hosts
+allowed to use the script, and/or one or more comma-separated IP addresses and
+CIDR subnet mask to specify a range of hosts.  IPv4 only!  For example
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "*"
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "192.168.1.2"
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "192.168.1.2,192.168.1.3"
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "192.168.1.0/24"
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "192.168.1.0/24,192.168.2.2"
+</PRE>
+
+<P> While the LNM$SYSTEM table is used in these examples, logical names may be
+defined in any table searched by LNM$FILE_DEV, including WASD_TABLE.
+
+<P> By default the WebSocket, and hence all traffic to and from the DCLinabox
+login and session, is only allowed over <B>Secure Sockets Layer</B> (wss:). 
+This is the case even when the terminal page is accessed via standard
+(unencrypted) HTTP and implies  the system must have a working SSL service.  To
+allow access via unencrypted connections (<B>CAUTION</B>) add <TT>ws:</TT>
+somewhere in the logical name value and if the terminal page is accessed using
+standard HTTP the WebSocket will be established using the same service.
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "ws:,*"
+$ DEFINE /SYSTEM DCLINABOX_ENABLE "192.168.1.0/24,ws:,192.168.2.2"
+</PRE>
+
+<P> An idle session is one not having terminal input for a given period.  By
+default idle sessions are disconnected after two hours with a five minute
+warning.  The logical name DCLINABOX_IDLE allows the number of minutes before
+client disconnection to be specified, the number of minutes warning (delivered
+in a browser alert), and the warning message (allowing language customisation). 
+Each of these elements is delimited by a comma.
+
+<P> Define to -1 to to disable idle disconnection.
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_IDLE -1
+</PRE>
+
+<P> To specify a four hour idle period with ten minute warning and local warning
+message (which may contain just one "%d" to substitute the minutes warning).
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_IDLE "240,10,WARNING - disconnection in %d minutes!"
+</PRE>
+
+<P> The logical name DCLINABOX_ALERT results in an announcement being displayed
+in a browser alert dialog.  This alert will be delivered at session
+establishment if it exists at the time, perhaps as a permanent announcement,
+otherwise will be alerted within a minute of it first being defined.  If an
+ephemeral announcement it should be undefined when no longer relevant.  For
+example
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_ALERT -
+"*** DCLinabox restart shortly - PLEASE LOG OFF ***"
+</PRE>
+
+<P> By default the terminal title bar displays the DCLinabox host name, VMS
+node  name and username.  To display the process name in addition (periodically
+updated if changes) the executable image needs to be installed with WORLD
+privilege.  System startup requires
+
+<PRE CLASS="code">
+$ INSTALL ADD CGI-BIN:[000000]DCLINABOX.EXE /AUTH=(WORLD)
+</PRE>
+
+<P> and on executable image update
+
+<PRE CLASS="code">
+$ INSTALL REPLACE CGI-BIN:[000000]DCLINABOX.EXE
+</PRE>
+
+<P> Also see <A HREF="#obfuscation">Obfuscation</A>.
+
+<A NAME="sso">
+<H2>Single Sign-On</H2>
+</A>
+
+<P> By default, <SPAN CLASS="dclinabox">DCLinabox</SPAN> terminal sessions
+prompt for a username and password.  For sites where WASD SYSUAF authentication
+is available, or where the authenticated remote user string is the equivalent
+of a VMS username, <SPAN CLASS="dclinabox">DCLinabox</SPAN> can use that
+browser-authenticated VMS username to establish a terminal session without
+further credential input (i.e. the terminal just displays the DCL prompt, ready
+to go).
+
+<P> <B>This is obviously very powerful and should only be used with DUE
+CAUTION!</B>
+
+<P> Note that the browser must support the authentication being used for its
+WebSocket capability as well as for general web access.  For example, at the
+time of writing (December 2012) only Firefox 15.0 supports the standard HTTP
+BASIC authentication mechanism (username and password) for WebSocket, and
+Chrome 22.0, MSIE 10.0, Opera 12.10 and Safari 6.0 do not.
+
+<P> It is possible to selectively apply SSO authentication dependent on the
+browser in use.  This allows suitable browsers to SSO while not disabling
+others from using <SPAN CLASS="dclinabox">DCLinabox</SPAN> via the logon
+prompt.  For example the following applies it only to browsers with
+<I>firefox</I> or <I>whatever</I> in the agent identification.
+
+<PRE CLASS="code">
+["VMS credentials"=WASD_VMS_RW=id]
+if (websocket:)
+   if (user-agent:*firefox* || user-agent:*whatever*)
+      /*dclinabox* r+w,https:
+   endif
+endif
+</PRE>
+
+<P> <B>The SSO functionality is enabled using the DCLINABOX_SSO logical
+name.</B>
+
+<P> This logical name is multi-valued, allowing considerable granularity in
+establishing allowed use of the facility.  Each value begins with the name of
+the realm associated with authentication of the VMS username.  This is
+separated by an equate symbol and zero or more comma-separated usernames
+allowed to single sign-on and/or trailing wildcard.  Preceding a username with
+a '!' (exclamation point) specifically disallows the matching username from
+SSO.  All string matches are case-insensitive. 
+
+<P> Account restrictions (e.g. times) are not evaluated.  If a specific
+username matches it is permitted regardless of the account privileges.  If a
+'**' (double asterisk) is specified any username is permitted regardless of the
+account privileges.  If a '*' (single asterisk) is specified any non-privileged
+account is permitted to SSO.  If '!*' (exclamation point then asterisk) is
+specified <SPAN CLASS="dclinabox">DCLinabox</SPAN> cannot be used except if
+permitted by SSO.
+
+<P> For example, the following authentication rule
+
+<PRE CLASS="code">
+["VMS credentials"=WASD_VMS_RW=id]
+if (websocket:) /*dclinabox* r+w,https:
+</PRE>
+
+<P> would require the logical name defintion
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_SSO "WASD_VMS_RW=*"
+</PRE>
+
+<P> to allow any such non-privileged authenticated user to create a logged-in
+terminal session, while the logical name definition
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_SSO "WASD_VMS_RW=REN,STIMPY"
+</PRE>
+
+<P> would allow only users REN and STIMPY to do so.  The logical name
+definition
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_SSO "WASD_VMS_RW=**"
+</PRE>
+
+<P> would allow any account (privileged or non-privileged) to SSO, and
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_SSO "WASD_VMS_RW=REN,!STIMPY,*"
+</PRE>
+
+<P> allows (perhaps privileged) REN but not STIMPY, and then any other
+non-privileged account.
+
+<P> If a matching authentication realm is not present, or a matching username
+in a matched realm is not found, or a disabling account status, then single
+sign-on does not occur and the terminal session just prompts for credentials as
+usual.  Of course, even if the logical name does not allow SSO, the access to
+<SPAN CLASS="dclinabox">DCLinabox</SPAN> is still controlled by the web server
+authentication and authorisation.
+
+<P> <B>The logical name DCLINABOX_ANNOUNCE</B> allows an SSO session
+establishment announcement to be displayed in the terminal window.  This
+multi-valued logical name appends carriage-control to each value displaying it
+as separate line.
+
+<PRE CLASS="code">
+$ DEFINE /SYSTEM DCLINABOX_ANNOUNCE "***** WARNING *****"," ","AUTHORISED USE ONLY!"
+</PRE>
+
+<P> <B>Single sign-on requires the executable image to be installed with
+privileges</B> to allow UAI and persona services to be used.  System startup
+requires
+
+<PRE CLASS="code">
+$ INSTALL ADD CGI-BIN:[000000]DCLINABOX.EXE /AUTH=(DETACH,SYSPRV,WORLD)
+</PRE>
+
+<P> (WORLD only for terminal title management) and on executable image update
+
+<PRE CLASS="code">
+$ INSTALL REPLACE CGI-BIN:[000000]DCLINABOX.EXE
+</PRE>
+
+<A NAME="custom">
+<H2>Customising</H2>
+</A>
+
+<P> A <SPAN CLASS="dclinabox">DCLinabox</SPAN> session has user-selectable
+characteristics available via a right-click menu.
+
+<P> The <SPAN CLASS="dclinabox">DCLinabox</SPAN> terminal emulator
+infrastructure is designed to allow straight-forward application and site
+localisation.
+
+<P> <SPAN CLASS="dclinabox">DCLinabox</SPAN> operates in one of two modes;
+<UL>
+<LI> terminal embedded in an HTML page
+<LI> standalone terminal window
+</UL>
+
+Both the embedded terminal and the terminal launcher are simple to incorporate
+in a site-local page. The 
+<A TARGET="_blank" HREF="example.html?httpd=content&type=text/plain"><SPAN CLASS="dclinabox">EXAMPLE.HTML</SPAN></A>
+page demonstrates both.
+
+<UL>
+<LI> embedded:&nbsp; <TT>&lt;iframe src=&quot;/dclinabox/-/dclinabox.html&quot;&gt;&lt;/iframe&gt;</TT>
+<LI> standalone:&nbsp; <TT>&lt; ... onclick=&quot;openDCLinabox()&quot; ... &gt;</TT>
+</UL>
+
+<P> The standalone terminal <TT>openDCLinabox()</TT> function will
+accept an optional host name (with optional scheme and/or port).
+
+<PRE CLASS="code">
+&lt; ... onclick=&quot;openDCLinabox('the.host.name')&quot; ... &gt
+</PRE>
+
+<P> Configuration of some elements of <SPAN CLASS="dclinabox">DCLinabox</SPAN>
+behaviour is possible using JavaScript variables.
+
+<DIV STYLE="margin:1em 5em 1em 2em;"> 
+<TABLE class="variable">
+<TR><TH WIDTH="15%">Variable</TH><TH WIDTH="50%">Purpose</TH><TH WIDTH="25%">Value</TH></TR>
+
+<TR><TD>DCLinaboxAnother</TD>
+<TD>the <SPAN CLASS="button">&nbsp;^&nbsp;</SPAN> button
+displayed on a standalone terminal can also be made available on an embedded
+terminal</TD>
+<TD><I>true</I> or <I>false</I>(D)</TD></TR>
+
+<TR><TD>DCLinaboxConfig</TD>
+<TD>specifies a JavaScript file name containing these variables</TD>
+<TD>(string) <I>name</I>.JS</TD></TR>
+
+<TR><TD>DCLinaboxHeight</TD>
+<TD>terminal height (number of lines)</TD>
+<TD>(integer) 12 to 96 (24(D))</TD></TR>
+
+<TR><TD>DCLinaboxHost</TD>
+<TD>specifies the host to which the terminal connects</TD>
+<TD>(string) host name or address</TD></TR>
+
+<TR><TD>DCLinaboxImmediate</TD>
+<TD>a standlone terminal connects immediately but an embedded terminal must
+<SPAN CLASS="button">CONNECT</SPAN> with this setting overriding this
+</TD>
+<TD><I>true</I> or <I>false</I>(D)</TD></TR>
+
+<TR><TD>DCLinaboxLogoutClose</TD>
+<TD>detects the LOGOUT response and closes a standalone terminal window</TD>
+<TD><I>true</I>(D) or <I>false</I></TD></TR>
+
+<TR><TD>DCLinaboxMessage</TD>
+<TD>allows message text (and hence language) customisation</TD>
+<TD>see <A HREF="#messages">below</A></TD></TR>
+
+<TR><TD>DCLinaboxResizeEmbedded</TD>
+<TD>makes the resize dialog available on an embedded terminal</TD>
+<TD><I>true</I> or <I>false</I>(D)</TD></TR>
+
+<TR><TD>DCLinaboxResizeOptions</TD>
+<TD>allows resize dialog options to be specified</TD>
+<TD>array of WxH strings (see 
+<A TARGET="_blank" HREF="/dclinabox/-/dclinabox.js?httpd=content&type=text/plain"><SPAN CLASS="dclinabox">DCLINABOX.JS</SPAN></A>
+)</TD></TR>
+
+<TR><TD>DCLinaboxScriptName</TD>
+<TD>allows the <SPAN CLASS="dclinabox">DCLinabox</SPAN> script to have a
+different name</TD>
+<TD>see <A HREF="#obfuscation">below</A></TD></TR>
+
+<TR><TD>DCLinaboxScroll</TD>
+<TD>terminal scrollback buffer</TD>
+<TD>(integer) zero(D) to disable or number of lines</TD></TR>
+
+<TR><TD>DCLinaboxSecureAlways</TD>
+<TD>always connect to the terminal system via SSL</TD>
+<TD><I>true</I>(D) or <I>false</I></TD></TR>
+
+<TR><TD>DCLinaboxStyle</TD>
+<TD>specifies a CSS file name containing site specifics</TD>
+<TD>(string) <I>name</I>.CSS</TD></TR>
+
+<TR><TD>DCLinaboxTitle</TD>
+<TD>by default a standalone terminal is named &quot;DCLinabox:
+<I>host</I> <I>node</I> <I>user</I> [<I>process</I>]&quot; with this providing
+a local alternative</TD>
+<TD>(string) description</TD></TR>
+
+<TR><TD>DCLinaboxWidth</TD>
+<TD>terminal width</TD>
+<TD>(integer) 80(D) or 132</TD></TR>
+
+<TR><TD>DCLinaboxWxH</TD>
+<TD>terminal dimensions (width x height)</TD>
+<TD>(string) e.g. 80x24, 132x24, 132x48</TD></TR>
+
+</TABLE>
+</DIV>
+
+<P> Common settings can be seen and are available for modification in the file
+<A TARGET="_blank" HREF="/dclinabox/-/configinabox.js?httpd=content&type=text/plain"><SPAN CLASS="dclinabox">CONFIGINABOX.JS</SPAN></A>
+for site-wide configuration, or the JavaScript variable can be assigned using a
+&lt;script&gt;..&lt;/script&gt; element appended to the
+&lt;head&gt;..&lt;head&gt; section of an embedded terminal page or terminal
+launcher page to provide page-specific customisation.  For example:
+
+<PRE CLASS="code">
+&lt;script type="text/javascript"&gt;
+DCLinaboxSecureAlways = true;
+DCLinaboxImmediate = true;
+DCLinaboxWidth = 132;
+DCLinaboxScroll = 200;
+&lt;/script&gt;
+</PRE>
+
+<P> By default <SPAN CLASS="dclinabox">DCLinabox</SPAN> connects to the same
+host and port used to access the HTML page containing the embedded terminal or
+launcher button/link.  It is possible to have the terminal connect to a
+different host (which of course must have the <TT>/cgiplus-bin/dclinabox</TT>
+application available).  This host specification can contain an optional,
+colon-delimited port number and the variable used to specify just an alternate
+port number. Add the <TT>DCLinaboxHost</TT> JavaScript variable to the embedded
+terminal or launcher page.
+
+<PRE CLASS="code">
+&lt;script type="text/javascript"&gt;DCLinaboxHost="the.host.name"&lt;/script&gt;
+</PRE>
+
+<P> Alternatively, a host selection dialog can be generated on the embedded
+terminal or launcher page.
+
+<PRE CLASS="code">
+&lt;span id="selectDCLinaboxHost"&gt;&lt;script type="text/javascript"&gt;
+selectDCLinaboxHost("one.host.name,two.host.name,three.host.name")
+&lt;/script&gt;&lt;/span&gt;
+</PRE>
+
+<P> Optionally, the host specification can include an equate symbol delimitted
+description.
+
+<PRE CLASS="code">
+&lt;span id="selectDCLinaboxHost"&gt;&lt;script type="text/javascript"&gt;
+selectDCLinaboxHost("one.host.name=FIRST,two.host.name,three.host.name=3rd host name")
+&lt;/script&gt;&lt;/span&gt;
+</PRE>
+
+<P> <SPAN CLASS="dclinabox">DCLinabox</SPAN> supports terminal widths of 80 and
+132 characters and page lengths from 12 to 96, defaulting to 80x24.  Terminal
+width and height may be independently set using the appropriate configuration
+variables or jointly set using DCLinaboxWxH variable (which overrides the
+individual settings).  In common with non-emulated terminals, a <TT>SET
+TERMINAL /INQURE</TT> is generally used to inform the terminal driver of these
+characteristics.
+
+<P> <A NAME="messages">Customised</A> and non English language messages are
+configurable.  Carefully reproduce the default message object found in
+<A TARGET="_blank" HREF="/dclinabox/-/dclinabox.js?httpd=content&type=text/plain"><SPAN CLASS="dclinabox">DCLINABOX.JS</SPAN></A>
+using desired equivalents and specify as for other configuration elements. 
+One, some or all may be specified, with absent messages defaulted.
+
+<PRE CLASS="code">
+&lt;script type="text/javascript"&gt;
+DCLinaboxMessage = { NOTSUP : 'WebSocket stöds inte!',
+                     CONNEC : 'ANSLUTA',
+                     DISCON : 'KOPPLA',
+                     DISURE : 'KOPPLA: Är du säker?'
+                   };
+&lt;/script&gt;
+</PRE>
+
+<P> The file
+<A TARGET="_blank" HREF="/dclinabox/-/dclinabox.css?httpd=content&type=text/plain"><SPAN CLASS="dclinabox">DCLINABOX.CSS</SPAN></A>
+is available for style-sheet customisation of terminal elements (colour, border
+size and style, font size, etc.)  A local style file may be specified using the
+JavaScript variable <TT>DCLinaboxStyle</TT>.
+
+<A NAME="bookmarklet">
+<H2>Bookmarklet</H2>
+</A>
+
+<P> A
+<A TARGET="_blank" HREF="http://en.wikipedia.org/wiki/Bookmarklet">Bookmarklet</A>
+is a snippet of useful JavaScript often stored as the URL of a
+bookmark/favorite. <SPAN CLASS="dclinabox">DCLinabox</SPAN> provides for
+bookmarklet activation allowing standalone terminals to be activated simply by
+clicking such a bookmark (or link).  The following application allows the
+essentials of a <SPAN CLASS="dclinabox">DCLinabox</SPAN> activation to be
+entered (with appropriate defaults) and the resulting link be added to the
+current browser's bookmarks.
+
+<form action="javascript:">
+<table border="0" width="100%">
+<tr><th></th><th align="left">Terminal Host</th>
+<th align="left">Script Name</th><th align="left">Size</th></tr> 
+<tr>
+<td><nobr>SSL<input id="termprot" type="checkbox" value="wss:" checked="checked"></nobr></td> 
+<td><input id="termhost" type="text" size="25"></td>
+<td><input id="termname" type="text" size="20"></td>
+<td><select id="termsize">
+<option value="80x24" selected>80x24</option>
+<option value="132x24">132x24</option>
+<option value="80x48">80x48</option>
+<option value="132x48">132x48</option>
+</select></td>
+<td><input type="button" value="reset" onclick="resetBookmarklet()"></td>
+<td width="95%">&nbsp;</td>
+</tr> 
+<tr><td></td><td>
+<input type="button" id="makemark" value="Make Bookmarklet"
+onclick="return makeBookmarklet()">
+<tr><td></td><td colspan="4" style="padding-top:5px;">
+<a id="marklink" name="marklink"
+style="border:1px dotted gray; padding:1px 8px 1px 8px;"
+onclick="eval(this.href.substr(11));return false;"></a>
+&nbsp;<i>(click, or drag into bookmarks)</i>
+</td></tr> 
+<tr><td></td><td colspan="4" style="padding-top:5px;">
+<textarea id="markurl" onclick="this.select()"
+style="display:inline; font-family:monospace;
+border:1px dotted gray; padding:1px 8px 1px 8px;">
+</textarea><nobr>&nbsp;<i>(copy-and-paste as required)</i></nobr>
+</td></tr> 
+</table>
+
+<script language="JavaScript">
+
+var termprot = document.getElementById('termprot');
+var termhost = document.getElementById('termhost');
+var termname = document.getElementById('termname');
+var termsize = document.getElementById('termsize');
+var marklink = document.getElementById('marklink');
+var markurl = document.getElementById('markurl');
+
+function resetBookmarklet() {
+   termprot.checked = true;
+   termhost.value = window.location.host;
+   termname.value = 'DCLinabox';
+   if (termsize) termsize.selectedIndex = 0;
+   marklink.innerHTML = 'bookmarklet link';
+   markurl.innerHTML = 'bookmarklet URL';
+   marklink.removeAttribute('href');
+   return false;
+}
+
+function makeBookmarklet() {
+   var params = 'status=0,toolbar=0,location=0,menubar=0,resizable=0,' +
+                'scrollbars=0,height=100,width=100';
+   if (termprot.checked)
+      var protocol = 'wss://';
+   else
+      var protocol = 'ws://';
+   if (termsize)
+      var WxH = termsize.options[termsize.selectedIndex].value;
+   else
+      var WxH = null;
+   var URL = window.location.protocol + '\/\/' +
+             window.location.host + '/dclinabox/-/dclinabox.html\#' +
+             protocol + termhost.value + '/cgiplus-bin/' + termname.value;
+   if (WxH) URL += ';' + WxH;
+   var markhref = 'javascript:window.open(\'' +
+                  URL + '\',\'_blank\',\'' + params + '\')';
+   var marktitle = termname.value + ' : ' + termhost.value;
+   marklink.href = markurl.innerHTML = markhref;
+   marklink.innerHTML = marktitle;
+   return false;
+}
+
+resetBookmarklet();
+</script>
+</FORM>
+
+<A NAME="obfuscation">
+<H2>Obfuscation</H2>
+</A>
+
+<P> With a public system it may be necessary to reduce nuisance-value access
+attempts and/or an attack vector with the executable having an alternate name. 
+It just means the well-known <TT>/cgiplus-bin/dclinabox</TT> path will not
+exist and is akin to changing from the well-known SSH port number to reduce
+that obvious attack vector.  Just use a less-than-obvious (or
+access-controlled) customised terminal page (or bookmarklet), with a different
+script executable file name, and add that script name to the
+&lt;head&gt;..&lt;/head&gt; section of the HTML terminal file as with other
+per-terminal configuration variables.
+
+<PRE CLASS="code">
+&lt;script type="text/javascript"&gt;DCLinaboxScriptName="anexample"&lt;/script&gt;
+</PRE>
+
+<P> The script accessed will then be <TT>/cgiplus-bin/anexample</TT> and the
+script file name <TT>CGI_EXE:ANEXAMPLE.EXE</TT>.
+
+<P> The logical names reflect the executable name and so in this case would be
+<TT>ANEXAMPLE_ENABLE</TT>, etc.
+
+<A NAME="problems">
+<H2>Problems?</H2>
+</A>
+
+<UL>
+<LI> With the <SPAN CLASS="dclinabox">DCLinabox</SPAN> kit ... Mark.Daniel@wasd.vsm.com.au
+<LI> The info-WASD mailing list
+</UL>
+
+<A NAME="release">
+<H2>Releases</H2>
+</A>
+
+<DL>
+<DT>v1.1.1&nbsp; 08-DEC-2012</DT>
+<DD>
+&bull;&nbsp; Fix for idle alert.
+<BR>&bull;&nbsp; Fix in VT100.JS for FF 15+ hyphen/underscore (Windows only).
+<BR>&bull;&nbsp; Opera 12.10 now supports WebSocket.
+<DT>v1.1.0&nbsp; 01-OCT-2012</DT>
+<DD>
+&bull;&nbsp; Session alert.
+<BR>&bull;&nbsp; Dynamic terminal resize.
+<BR>&bull;&nbsp; Refine idle session management.
+<BR>&bull;&nbsp; Standlone terminal title includes logon detail.
+<BR>&bull;&nbsp; Refine process termination detection and signalling.
+<BR>&bull;&nbsp; Single sign-on (no [additional] password required).
+<BR>&bull;&nbsp; Added <I>DCLinaboxResizeEmbedded</I> and
+<I>DCLinaboxResizeOptions</I> configuration variables.
+<DT>v1.0.2&nbsp; 21-JUL-2012</DT>
+<DD>
+&bull;&nbsp; wsLIB shut and destroy refinements.
+<BR>&bull;&nbsp; Added <I>DCLinaboxLogoutClose</I> configuration variable.
+<BR>&bull;&nbsp; Tested against MSIE 10.0 (Windows 8 Developer Preview) and
+Safari 6.0 (Developer Preview).
+<DT>v1.0.1&nbsp; 28-APR-2012</DT>
+<DD>
+&bull;&nbsp; Firefox (at least 11.0 and 12.0) reports (and presumably has) a
+different line  height (via .clientHeight) for the same font (plus three pixels
+on Windows and plus one on OS-X and Linux).  Add a minor kludge to dclinabox.js
+to adjust the terminal line height for this.
+<BR>&bull;&nbsp; Added <I>DCLinaboxWxH</I> and <I>DCLinaboxHeight</I>
+configuration variables.
+</DD>
+<DT>v1.0.0&nbsp; 22-JAN-2012</DT>
+<DD>&bull;&nbsp; initial</DD>
+</DL>
+
+<A NAME="ackn">
+<H2>Acknowlegements</H2>
+</A>
+
+<P> Many thanks to Markus Gutschke &lt;markus@shellinabox.com&gt; for the
+original <B>ShellInABox</B> project and for making it Free and Open Source via
+the GPL. Furthermore, the <TT>vt100.js</TT> implementation appears to be
+particularly rigorous, so thanks again.
+
+<BR><HR ALIGN=left SIZE=1 NOSHADE><BR>
+
+</BODY>
+</HTML>

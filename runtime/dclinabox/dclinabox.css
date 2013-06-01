@@ -1,0 +1,44 @@
+/******************************************************************************
+Copy this DCLINABOX.CSS to say _EXAMPLE.CSS and then append
+
+   <script type="text/javasscript">DCLinaboxStyle="_example.css"</script>
+
+to the <HEAD>..<HEAD> of the embedded terminal page or the page containing
+the terminal launcher.  In this way local customisation will not be
+overwritten when the DCLinabox kit is updated.
+*******************************************************************************/
+
+#vtinabox { border-width: 2px;
+            border-color: transparent;
+            box-shadow: 2px 2px 2px silver;
+            font-size: 11pt;
+          }
+
+#vt100 { border-width: 2px;
+         border-style: groove;
+         border-color: silver;
+       }
+
+#vtstatus { border-width: 2px;
+            border-style: groove;
+            border-color: silver;
+            padding-top: 2px;  /* border-width */
+            background-color: ghostwhite;
+            color: black;
+          }
+
+#vtbtn { border-width: 1px;
+         border-style: solid;
+         border-color: slategray;
+         margin: 1px 3px 1px 3px;
+         padding: 1px 1px 1px 1px;
+       }
+
+#selectWxH { border-width: 1px;
+             border-style: solid;
+             border-color: slategray;
+             margin: 0 0 0 2px;
+             padding: 0 0 0 2px;
+           }
+
+/** end **/

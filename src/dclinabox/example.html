@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<title>DCLinabox Example Page</title>
+
+<!-- the following JavaScript MUST be included -->
+<script type="text/javascript" src="/dclinabox/-/openinabox.js"></script>
+
+</head>
+<body style="margin:20px;">
+
+<h1 style="font-size:200%; font-family:monospace; font-weight:bold;
+           word-spacing:-5px;">DCLinabox Example Page</h1>
+
+<p style="width:50em;">
+This page demonstrates how to embed a <tt>DCLinabox</tt> terminal in an HTML
+page using an IFRAME element, and how to provide a standalone terminal launch
+button.  The source has deliberately been kept very uncluttered and can be
+viewed in 
+<a target="_blank" href="/wasd_root/src/dclinabox/example.html?httpd=content&type=text/plain"><tt>EXAMPLE.HTML</tt></a>
+</p>
+
+<!-- an embedded terminal -->
+<iframe src="/dclinabox/-/dclinabox.html"></iframe>
+
+<p>
+The following button opens a standalone terminal window:&nbsp; 
+
+<!-- a standalone terminal launch button/link -->
+<a style="border:1px solid silver; padding:2px 5px 2px 5px;"
+   onclick="return openDCLinabox();">Launch DCLinabox Terminal</a>
+</p>
+
+<p> Optional host selector:&nbsp;
+
+<span id="selectDCLinaboxHost"><script type="text/javascript">
+selectDCLinaboxHost(",one.host.name,two.host.name");
+</script></span>
+</p>
+
+<p> Optional terminal selector:&nbsp;
+
+<span id="selectDCLinaboxWxH"><script type="text/javascript">
+selectDCLinaboxWxH("80x24,132x24,80x48,132x48");
+</script></span>
+</p>
+
+</body>
+</html>
